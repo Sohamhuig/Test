@@ -169,15 +169,62 @@ def create_bot(token, bot_index):
         "You're witty and use more humor in conversations.",
         "You're supportive and encouraging in your responses.",
         "You're direct and get straight to the point.",
-        "You{response}```")
+        "You're analytical and provide detailed explanations."
+    ]
 
-        @bot.command(name="leave")
-        async def leave_server(ctx, guild_id: int = None):
-            if ctx.author.id == bot.owner_id:
-                if guild_id is None:
-                    guild_id = ctx.guild.id
+    # Assign personality variant to bot
+    if bot_index < len(personality_variants):
+        bot.personality = personality_variants[bot_index]
+    else:
+        bot.personality = personality_variants[bot_index % len(personality_variants)]
 
-                await ctx.send("🔄 Attempting to leave server with all bots...")
-                results = await multi_bot_manager.leave_server(guild_id)
-                response = "\n".join(results)
-                await ctx.send(f"```{response}
+    @bot.command(name="leave")
+    async def leave_server(ctx, guild_id: int = None):
+        if ctx.author.id == bot.owner_id:
+            if guild_id is None:
+                guild_id = ctx.guild.id
+
+            await ctx.send("🔄 Attempting to leave server with all bots...")
+            results = await multi_bot_manager.leave_server(guild_id)
+            response = "\n".join(results)
+            await ctx.send(f"```{response}```")
+
+    return bot
+
+async def main():
+    """Main function to start all bots"""
+    clear_console()
+    print(f"{Fore.CYAN}Starting Discord AI Multi-Bot...{Style.RESET_ALL}")
+
+    if not TOKENS:
+        print(f"{Fore.RED}No tokens found! Please check your configuration.{Style.RESET_ALL}")
+        return
+
+    # Create bots for each token
+    for i, token in enumerate(TOKENS):
+        try:
+            bot = create_bot(token, i)
+            multi_bot_manager.add_bot(bot)
+            print(f"{Fore.GREEN}Created bot {i+1}/{len(TOKENS)}{Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}Failed to create bot {i+1}: {e}{Style.RESET_ALL}")
+
+    # Start all bots
+    tasks = []
+    for i, bot in enumerate(multi_bot_manager.bots):
+        token = TOKENS[i]
+        task = asyncio.create_task(bot.start(token))
+        tasks.append(task)
+
+    try:
+        await asyncio.gather(*tasks)
+    except KeyboardInterrupt:
+        print(f"\n{Fore.YELLOW}Shutting down bots...{Style.RESET_ALL}")
+        for bot in multi_bot_manager.bots:
+            await bot.close()
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print(f"\n{Fore.YELLOW}Bot stopped.{Style.RESET_ALL}")
