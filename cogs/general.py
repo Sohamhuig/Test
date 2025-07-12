@@ -104,6 +104,27 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
         response = "🗣️ **AI Talk Mode Enabled Channels:**\n" + "\n".join(channel_list)
         await ctx.send(response, delete_after=30)
 
+    @commands.command(name="debug", description="Show bot debug information")
+    async def debug(self, ctx):
+        if ctx.author.id != self.bot.owner_id:
+            await ctx.send("Only the bot owner can use this command.", delete_after=10)
+            return
+        
+        debug_info = f"""```
+🔍 Bot Debug Information:
+- Bot User: {self.bot.user}
+- Owner ID: {self.bot.owner_id}
+- Your ID: {ctx.author.id}
+- Command Prefix: {self.bot.command_prefix}
+- Current Channel ID: {ctx.channel.id}
+- Paused: {self.bot.paused}
+- Active Channels: {len(self.bot.active_channels)}
+- Allow DM: {self.bot.allow_dm}
+- Allow GC: {self.bot.allow_gc}
+- Channel in Active: {ctx.channel.id in self.bot.active_channels}
+```"""
+        await ctx.send(debug_info, delete_after=60)
+
     @commands.command(name="console", description="Enable console messaging mode")
     async def console(self, ctx):
         if ctx.author.id != self.bot.owner_id:
