@@ -6,7 +6,7 @@ bot:
   prefix: "~"
   
   # The word(s) you want the AI to respond to (e.g: trigger="John" or trigger="John,Jon,Jonathon")
-  trigger: "WORD_YOU_WANT_TO_TRIGGER_BOT_WITH"
+  trigger: "bot"
 
   # Model of the AI you'd like to use from Groq (https://console.groq.com/docs/models) (Default: llama3-70b-8192)
   groq_model: "llama3-70b-8192"
