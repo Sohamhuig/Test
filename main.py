@@ -162,6 +162,7 @@ def create_bot(token, bot_index):
     bot.active_conversations = {}
     bot.bot_index = bot_index
     bot.selfbot_id = None
+    bot.console_mode = False
 
     # Unique personality variations for each bot
     personality_variants = [
@@ -190,6 +191,82 @@ def create_bot(token, bot_index):
             results = await multi_bot_manager.leave_server(guild_id)
             response = "\n".join(results)
             await ctx.send(f"```{response}```")
+
+    @bot.event
+    async def on_ready():
+        print(f"{Fore.GREEN}Bot {bot.bot_index + 1} logged in as {bot.user}{Style.RESET_ALL}")
+        
+        # Load all cogs
+        for filename in os.listdir("cogs"):
+            if filename.endswith(".py"):
+                try:
+                    await bot.load_extension(f"cogs.{filename[:-3]}")
+                except Exception as e:
+                    print(f"{Fore.RED}Failed to load {filename}: {e}{Style.RESET_ALL}")
+
+        # Start console listener for the first bot only
+        if bot.bot_index == 0:
+            asyncio.create_task(console_listener(bot))
+
+    async def console_listener(bot):
+        """Listen for console commands"""
+        import sys
+        import select
+        
+        while True:
+            try:
+                await asyncio.sleep(1)
+                
+                if not bot.console_mode:
+                    continue
+                
+                # Check if there's input available (non-blocking)
+                if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                    line = input().strip()
+                    
+                    if line.startswith('send '):
+                        parts = line.split(' ', 2)
+                        if len(parts) >= 3:
+                            try:
+                                user_id = int(parts[1])
+                                message = parts[2]
+                                user = await bot.fetch_user(user_id)
+                                if user:
+                                    await user.send(message)
+                                    print(f"✅ Message sent to {user.name}")
+                                else:
+                                    print("❌ User not found")
+                            except ValueError:
+                                print("❌ Invalid user ID")
+                            except Exception as e:
+                                print(f"❌ Error: {e}")
+                        else:
+                            print("❌ Usage: send <user_id> <message>")
+                    
+                    elif line.startswith('broadcast '):
+                        message = line[10:]  # Remove 'broadcast '
+                        sent_count = 0
+                        for channel_id in bot.active_channels:
+                            try:
+                                channel = bot.get_channel(channel_id)
+                                if channel:
+                                    await channel.send(message)
+                                    sent_count += 1
+                            except:
+                                pass
+                        print(f"✅ Broadcast sent to {sent_count} channels")
+                    
+                    elif line == 'exit':
+                        bot.console_mode = False
+                        print("🎮 Console mode disabled")
+                    
+                    else:
+                        print("❌ Unknown command. Available: send, broadcast, exit")
+                        
+            except Exception as e:
+                if bot.console_mode:
+                    print(f"Console error: {e}")
+                await asyncio.sleep(5)
 
     return bot
 

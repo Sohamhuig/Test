@@ -48,7 +48,8 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
     @commands.command(name="talk", description="Send a message to a specific user")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def talk(self, ctx, user_id: int, *, message):
-        if ctx.author.id != self.bot.owner_id:
+        # Allow the command to work for the bot owner or in DMs with the bot
+        if ctx.author.id != self.bot.owner_id and not isinstance(ctx.channel, discord.DMChannel):
             await ctx.send("Only the bot owner can use this command.", delete_after=10)
             return
         
@@ -56,7 +57,11 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
             user = await self.bot.fetch_user(user_id)
             if user:
                 await user.send(message)
-                await ctx.send(f"Message sent to {user.name}#{user.discriminator}", delete_after=10)
+                response = f"Message sent to {user.name}"
+                if hasattr(user, 'discriminator') and user.discriminator != '0':
+                    response += f"#{user.discriminator}"
+                await ctx.send(response, delete_after=10)
+                print(f"✅ Message sent to {user.name} (ID: {user_id}): {message}")
             else:
                 await ctx.send("User not found.", delete_after=10)
         except discord.Forbidden:
@@ -65,6 +70,24 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
             await ctx.send("User not found.", delete_after=10)
         except Exception as e:
             await ctx.send(f"Error: {str(e)}", delete_after=10)
+            print(f"❌ Error sending message: {str(e)}")
+
+    @commands.command(name="console", description="Enable console messaging mode")
+    async def console(self, ctx):
+        if ctx.author.id != self.bot.owner_id:
+            await ctx.send("Only the bot owner can use this command.", delete_after=10)
+            return
+        
+        await ctx.send("Console messaging mode enabled. Check your console for instructions.", delete_after=10)
+        self.bot.console_mode = True
+        print("\n" + "="*50)
+        print("🎮 CONSOLE MESSAGING MODE ENABLED")
+        print("="*50)
+        print("Commands:")
+        print("  send <user_id> <message> - Send a DM to a user")
+        print("  broadcast <message> - Send to all active channels")
+        print("  exit - Disable console mode")
+        print("="*50)
 
     @commands.command(
         aliases=["analyze"],
