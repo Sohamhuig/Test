@@ -5,7 +5,7 @@ from openai import AsyncOpenAI as OpenAI
 from os import getenv
 from dotenv import load_dotenv
 from sys import exit
-from utils.helpers import get_env_path, load_config
+from utils.helpers import get_env_path, load_config, load_instructions
 from utils.error_notifications import webhook_log, print_error
 
 client = None
@@ -37,11 +37,15 @@ async def generate_response(prompt, instructions, history=None):
     if not client:
         init_ai()
     try:
+        # Load instructions from file instead of using passed parameter
+        file_instructions = load_instructions()
+        system_content = file_instructions if file_instructions else instructions
+        
         if history:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": instructions},
+                    {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt},
                     *history,
                 ],
@@ -50,7 +54,7 @@ async def generate_response(prompt, instructions, history=None):
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": instructions},
+                    {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt},
                 ],
             )
@@ -94,7 +98,7 @@ async def generate_response_image(prompt, instructions, image_url, history=None)
                 messages=[
                     {
                         "role": "system",
-                        "content": instructions
+                        "content": (load_instructions() if load_instructions() else instructions)
                         + " Images will be described to you, with the description wrapped in [|description|], so understand that you are to respond to the description as if it were an image you can see.",
                     },
                     {"role": "user", "content": prompt_with_image},
@@ -106,7 +110,7 @@ async def generate_response_image(prompt, instructions, image_url, history=None)
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": instructions},
+                    {"role": "system", "content": load_instructions() if load_instructions() else instructions},
                     {"role": "user", "content": prompt_with_image},
                 ],
             )
