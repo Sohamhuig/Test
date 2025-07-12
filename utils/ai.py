@@ -64,7 +64,7 @@ async def generate_response(prompt, instructions, history=None, guild_emojis=Non
                 ],
             )
         base_response = response.choices[0].message.content
-            # Add random server emojis to make it more engaging
+        # Add random server emojis to make it more engaging
         if guild_emojis:
             enhanced_response = add_random_emojis(base_response, guild_emojis)
             return enhanced_response
@@ -128,7 +128,7 @@ async def generate_response_image(prompt, instructions, image_url, history=None,
             {"role": "assistant", "content": response.choices[0].message.content}
         )
         base_response = response.choices[0].message.content
-            # Add random server emojis to make it more engaging
+        # Add random server emojis to make it more engaging
         if guild_emojis:
             enhanced_response = add_random_emojis(base_response, guild_emojis)
             return enhanced_response
