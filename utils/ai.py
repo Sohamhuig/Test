@@ -1,3 +1,4 @@
+# Adding server custom emoji support to the Discord bot.
 import sys
 
 from groq import AsyncGroq
@@ -7,9 +8,12 @@ from dotenv import load_dotenv
 from sys import exit
 from utils.helpers import get_env_path, load_config, load_instructions
 from utils.error_notifications import webhook_log, print_error
+import random
+import re
 
 client = None
 model = None
+available_emojis = []
 
 
 def init_ai():
@@ -33,14 +37,15 @@ def init_ai():
         sys.exit(1)
 
 
-async def generate_response(prompt, instructions, history=None):
+async def generate_response(prompt, instructions, history=None, guild_emojis=None):
     if not client:
         init_ai()
+
     try:
         # Load instructions from file instead of using passed parameter
         file_instructions = load_instructions()
         system_content = file_instructions if file_instructions else instructions
-        
+
         if history:
             response = await client.chat.completions.create(
                 model=model,
@@ -58,15 +63,20 @@ async def generate_response(prompt, instructions, history=None):
                     {"role": "user", "content": prompt},
                 ],
             )
-
-        return response.choices[0].message.content
+        base_response = response.choices[0].message.content
+            # Add random server emojis to make it more engaging
+        if guild_emojis:
+            enhanced_response = add_random_emojis(base_response, guild_emojis)
+            return enhanced_response
+        else:
+            return base_response
     except Exception as e:
         print_error("AI Error", e)
         await webhook_log(None, e)
         return None
 
 
-async def generate_response_image(prompt, instructions, image_url, history=None):
+async def generate_response_image(prompt, instructions, image_url, history=None, guild_emojis=None):
     if not client:
         init_ai()
     try:
@@ -117,8 +127,34 @@ async def generate_response_image(prompt, instructions, image_url, history=None)
         history.append(
             {"role": "assistant", "content": response.choices[0].message.content}
         )
-        return response.choices[0].message.content
+        base_response = response.choices[0].message.content
+            # Add random server emojis to make it more engaging
+        if guild_emojis:
+            enhanced_response = add_random_emojis(base_response, guild_emojis)
+            return enhanced_response
+        else:
+            return base_response
     except Exception as e:
         print_error("AI Error", e)
         await webhook_log(None, e)
         return None
+
+def add_random_emojis(text, emojis):
+    """
+    Adds random emojis from the server to the given text.
+    """
+    num_emojis = random.randint(1, 3)  # Add 1 to 3 emojis
+    emojis_to_add = random.sample(emojis, min(num_emojis, len(emojis)))
+
+    words = text.split()
+    num_words = len(words)
+
+    for emoji in emojis_to_add:
+        # Insert the emoji at a random position in the text
+        insert_position = random.randint(0, num_words)
+        words.insert(insert_position, str(emoji))  # Ensure emoji is a string
+
+        num_words += 1  # Increment the number of words
+
+    return " ".join(words)
+`

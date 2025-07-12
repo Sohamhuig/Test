@@ -197,6 +197,10 @@ def create_bot(token, bot_index):
     async def on_ready():
         print(f"{Fore.GREEN}Bot {bot.bot_index + 1} logged in as {bot.user}{Style.RESET_ALL}")
 
+        # Collect custom emojis from all servers
+        from utils.ai import collect_server_emojis
+        collect_server_emojis(bot.guilds)
+
         # Load all cogs
         for filename in os.listdir("cogs"):
             if filename.endswith(".py"):
@@ -208,6 +212,20 @@ def create_bot(token, bot_index):
         # Start console listener for the first bot only
         if bot.bot_index == 0:
             asyncio.create_task(console_listener(bot))
+
+    @bot.event
+    async def on_guild_join(guild):
+        """Update emoji collection when joining a new server"""
+        print(f"🎉 Joined server: {guild.name}")
+        from utils.ai import collect_server_emojis
+        collect_server_emojis(bot.guilds)
+
+    @bot.event
+    async def on_guild_remove(guild):
+        """Update emoji collection when leaving a server"""
+        print(f"👋 Left server: {guild.name}")
+        from utils.ai import collect_server_emojis
+        collect_server_emojis(bot.guilds)
 
     @bot.event
     async def on_message(message):
