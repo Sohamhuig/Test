@@ -196,7 +196,7 @@ def create_bot(token, bot_index):
     @bot.event
     async def on_ready():
         print(f"{Fore.GREEN}Bot {bot.bot_index + 1} logged in as {bot.user}{Style.RESET_ALL}")
-        
+
         # Load all cogs
         for filename in os.listdir("cogs"):
             if filename.endswith(".py"):
@@ -220,9 +220,23 @@ def create_bot(token, bot_index):
 
         # Check if this is a talk channel
         if hasattr(bot, 'talk_channels') and message.channel.id in bot.talk_channels:
-            # Don't respond if this was a command
-            ctx = await bot.get_context(message)
-            if ctx.valid:
+            # Only respond to some messages, not all (like a real human)
+            should_respond = False
+
+            # Always respond if mentioned
+            if bot.user.mentioned_in(message):
+                should_respond = True
+            # Sometimes respond to questions
+            elif any(word in message.content.lower() for word in ['?', 'kya', 'what', 'how', 'why', 'when', 'where']):
+                should_respond = random.random() < 0.4  # 40% chance
+            # Sometimes respond to greetings
+            elif any(word in message.content.lower() for word in ['hi', 'hello', 'hey', 'sup', 'wassup', 'namaste', 'good morning', 'good night']):
+                should_respond = random.random() < 0.6  # 60% chance
+            # Sometimes just randomly respond to keep conversation going
+            elif len(message.content) > 10:  # Don't respond to very short messages
+                should_respond = random.random() < 0.15  # 15% chance for normal messages
+
+            if not should_respond:
                 return
 
             try:
@@ -231,18 +245,14 @@ def create_bot(token, bot_index):
                     if bot.realistic_typing:
                         typing_time = len(message.content) * 0.02 + random.uniform(1, 3)
                         await asyncio.sleep(min(typing_time, 5))
-                    
-                    # Generate response with human-like instructions
-                    human_instructions = f"""You are a real human user chatting naturally in a Discord channel. Respond to messages as a normal person would. Be conversational, casual, and authentic. Don't mention that you're an AI or bot. {bot.personality if hasattr(bot, 'personality') else ''}
 
-Current conversation context: Someone just said "{message.content}" """
-                    
+                    # Use the instructions from instructions.txt directly
                     response = await generate_response(
                         message.content, 
-                        human_instructions,
+                        "",  # Let the AI file handle instructions
                         history=None
                     )
-                    
+
                     if response and len(response.strip()) > 0:
                         # Don't send error messages to channel
                         if "Sorry, I couldn't generate a response" in response:
@@ -254,7 +264,7 @@ Current conversation context: Someone just said "{message.content}" """
                                 pass
                             print(f"❌ Failed to generate response in {message.channel.name}")
                             return
-                        
+
                         # Split long responses
                         chunks = split_response(response)
                         for chunk in chunks:
@@ -263,9 +273,9 @@ Current conversation context: Someone just said "{message.content}" """
                             await message.channel.send(chunk)
                             if len(chunks) > 1:
                                 await asyncio.sleep(1)
-                        
+
                         print(f"🗣️ Responded in talk channel {message.channel.name}: {response[:50]}...")
-                        
+
             except Exception as e:
                 print(f"❌ Error in talk channel response: {e}")
                 await webhook_log(message, e)
@@ -274,18 +284,18 @@ Current conversation context: Someone just said "{message.content}" """
         """Listen for console commands"""
         import sys
         import select
-        
+
         while True:
             try:
                 await asyncio.sleep(1)
-                
+
                 if not bot.console_mode:
                     continue
-                
+
                 # Check if there's input available (non-blocking)
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                     line = input().strip()
-                    
+
                     if line.startswith('send '):
                         parts = line.split(' ', 2)
                         if len(parts) >= 3:
@@ -304,7 +314,7 @@ Current conversation context: Someone just said "{message.content}" """
                                 print(f"❌ Error: {e}")
                         else:
                             print("❌ Usage: send <user_id> <message>")
-                    
+
                     elif line.startswith('broadcast '):
                         message = line[10:]  # Remove 'broadcast '
                         sent_count = 0
@@ -317,14 +327,14 @@ Current conversation context: Someone just said "{message.content}" """
                             except:
                                 pass
                         print(f"✅ Broadcast sent to {sent_count} channels")
-                    
+
                     elif line == 'exit':
                         bot.console_mode = False
                         print("🎮 Console mode disabled")
-                    
+
                     else:
                         print("❌ Unknown command. Available: send, broadcast, exit")
-                        
+
             except Exception as e:
                 if bot.console_mode:
                     print(f"Console error: {e}")
