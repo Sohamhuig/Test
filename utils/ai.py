@@ -19,12 +19,15 @@ def init_ai():
 
     load_dotenv(dotenv_path=env_path)
 
-    if getenv("OPENAI_API_KEY"):
-        client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
-        model = config["bot"]["openai_model"]
-    elif getenv("GROQ_API_KEY"):
+    # Prioritize Groq over OpenAI if both are available
+    if getenv("GROQ_API_KEY"):
         client = AsyncGroq(api_key=getenv("GROQ_API_KEY"))
         model = config["bot"]["groq_model"]
+        print(f"Using Groq API with model: {model}")
+    elif getenv("OPENAI_API_KEY"):
+        client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
+        model = config["bot"]["openai_model"]
+        print(f"Using OpenAI API with model: {model}")
     else:
         print("No API keys found, exiting.")
         sys.exit(1)
