@@ -45,32 +45,64 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
 """
         await ctx.send(help_text, delete_after=30)
 
-    @commands.command(name="talk", description="Send a message to a specific user")
+    @commands.command(name="talk", description="Enable AI conversation mode in a channel")
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def talk(self, ctx, user_id: int, *, message):
-        # Allow the command to work for the bot owner or in DMs with the bot
-        if ctx.author.id != self.bot.owner_id and not isinstance(ctx.channel, discord.DMChannel):
+    async def talk(self, ctx, channel_id: int = None):
+        # Allow the command to work for the bot owner
+        if ctx.author.id != self.bot.owner_id:
             await ctx.send("Only the bot owner can use this command.", delete_after=10)
             return
         
         try:
-            user = await self.bot.fetch_user(user_id)
-            if user:
-                await user.send(message)
-                response = f"Message sent to {user.name}"
-                if hasattr(user, 'discriminator') and user.discriminator != '0':
-                    response += f"#{user.discriminator}"
-                await ctx.send(response, delete_after=10)
-                print(f"✅ Message sent to {user.name} (ID: {user_id}): {message}")
+            # Use current channel if no channel_id provided
+            if channel_id is None:
+                channel = ctx.channel
+                channel_id = ctx.channel.id
             else:
-                await ctx.send("User not found.", delete_after=10)
-        except discord.Forbidden:
-            await ctx.send("Cannot send DM to this user (blocked or DMs disabled).", delete_after=10)
-        except discord.NotFound:
-            await ctx.send("User not found.", delete_after=10)
+                channel = self.bot.get_channel(channel_id)
+            
+            if not channel:
+                await ctx.send("Channel not found or bot doesn't have access.", delete_after=10)
+                return
+            
+            # Initialize talk_channels if it doesn't exist
+            if not hasattr(self.bot, 'talk_channels'):
+                self.bot.talk_channels = set()
+            
+            # Toggle talk mode for the channel
+            if channel_id in self.bot.talk_channels:
+                self.bot.talk_channels.remove(channel_id)
+                await ctx.send(f"🔇 AI talk mode disabled for {channel.name}", delete_after=10)
+                print(f"🔇 AI talk mode disabled for channel: {channel.name} (ID: {channel_id})")
+            else:
+                self.bot.talk_channels.add(channel_id)
+                await ctx.send(f"🗣️ AI talk mode enabled for {channel.name}! The bot will now respond naturally to all messages in this channel.", delete_after=10)
+                print(f"🗣️ AI talk mode enabled for channel: {channel.name} (ID: {channel_id})")
+                
         except Exception as e:
             await ctx.send(f"Error: {str(e)}", delete_after=10)
-            print(f"❌ Error sending message: {str(e)}")
+            print(f"❌ Error with talk command: {str(e)}")
+
+    @commands.command(name="listtalk", description="List channels with AI talk mode enabled")
+    async def listtalk(self, ctx):
+        if ctx.author.id != self.bot.owner_id:
+            await ctx.send("Only the bot owner can use this command.", delete_after=10)
+            return
+        
+        if not hasattr(self.bot, 'talk_channels') or not self.bot.talk_channels:
+            await ctx.send("No channels have AI talk mode enabled.", delete_after=15)
+            return
+        
+        channel_list = []
+        for channel_id in self.bot.talk_channels:
+            channel = self.bot.get_channel(channel_id)
+            if channel:
+                channel_list.append(f"• {channel.name} (ID: {channel_id})")
+            else:
+                channel_list.append(f"• Unknown Channel (ID: {channel_id})")
+        
+        response = "🗣️ **AI Talk Mode Enabled Channels:**\n" + "\n".join(channel_list)
+        await ctx.send(response, delete_after=30)
 
     @commands.command(name="console", description="Enable console messaging mode")
     async def console(self, ctx):

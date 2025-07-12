@@ -163,6 +163,7 @@ def create_bot(token, bot_index):
     bot.bot_index = bot_index
     bot.selfbot_id = None
     bot.console_mode = False
+    bot.talk_channels = set()  # Channels where bot acts like a human
 
     # Unique personality variations for each bot
     personality_variants = [
@@ -207,6 +208,56 @@ def create_bot(token, bot_index):
         # Start console listener for the first bot only
         if bot.bot_index == 0:
             asyncio.create_task(console_listener(bot))
+
+    @bot.event
+    async def on_message(message):
+        # Don't respond to self or other bots
+        if message.author == bot.user or message.author.bot:
+            return
+
+        # Process commands first
+        await bot.process_commands(message)
+
+        # Check if this is a talk channel
+        if hasattr(bot, 'talk_channels') and message.channel.id in bot.talk_channels:
+            # Don't respond if this was a command
+            ctx = await bot.get_context(message)
+            if ctx.valid:
+                return
+
+            try:
+                # Add some natural delay
+                async with message.channel.typing():
+                    if bot.realistic_typing:
+                        typing_time = len(message.content) * 0.02 + random.uniform(1, 3)
+                        await asyncio.sleep(min(typing_time, 5))
+                    
+                    # Generate response with human-like instructions
+                    human_instructions = f"""You are a real human user chatting naturally in a Discord channel. Respond to messages as a normal person would. Be conversational, casual, and authentic. Don't mention that you're an AI or bot. {bot.personality if hasattr(bot, 'personality') else ''}
+
+Current conversation context: Someone just said "{message.content}" """
+                    
+                    response = await generate_response(
+                        message.content, 
+                        human_instructions,
+                        history=None
+                    )
+                    
+                    if response and len(response.strip()) > 0:
+                        # Split long responses
+                        chunks = split_response(response)
+                        for chunk in chunks:
+                            if DISABLE_MENTIONS:
+                                chunk = re.sub(r'<@[!&]?(\d+)>', r'@\1', chunk)
+                            await message.channel.send(chunk)
+                            if len(chunks) > 1:
+                                await asyncio.sleep(1)
+                        
+                        print(f"🗣️ Responded in talk channel {message.channel.name}: {response[:50]}...")
+                        
+            except Exception as e:
+                print(f"❌ Error in talk channel response: {e}")
+                await webhook_log(message, e)
 
     async def console_listener(bot):
         """Listen for console commands"""
