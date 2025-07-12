@@ -409,7 +409,7 @@ def create_bot(token, bot_index):
                 print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} responding: {chunk}')
                 print_separator()
 
-            try:
+        try:
                 if bot.realistic_typing:
                     await asyncio.sleep(random.randint(10, 30))
                     async with message.channel.typing():
