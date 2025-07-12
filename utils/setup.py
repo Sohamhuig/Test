@@ -12,11 +12,15 @@ init()
 
 
 def validate_token(token):
+    if not token or len(token) < 50:  # Basic length check
+        return False
+    
     headers = {"Authorization": token}
     try:
-        r = requests.get("https://discord.com/api/v10/users/@me", headers=headers)
+        r = requests.get("https://discord.com/api/v10/users/@me", headers=headers, timeout=10)
         return r.status_code == 200
-    except:
+    except Exception as e:
+        print(f"Token validation error: {e}")
         return False
 
 
