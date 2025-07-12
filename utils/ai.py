@@ -56,7 +56,7 @@ async def generate_response(prompt, instructions, history=None):
     except Exception as e:
         print_error("AI Error", e)
         await webhook_log(None, e)
-        return "Sorry, I couldn't generate a response."
+        return None
 
 
 async def generate_response_image(prompt, instructions, image_url, history=None):
@@ -114,4 +114,4 @@ async def generate_response_image(prompt, instructions, image_url, history=None)
     except Exception as e:
         print_error("AI Error", e)
         await webhook_log(None, e)
-        return "Sorry, I couldn't generate a response."
+        return None

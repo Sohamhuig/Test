@@ -244,6 +244,17 @@ Current conversation context: Someone just said "{message.content}" """
                     )
                     
                     if response and len(response.strip()) > 0:
+                        # Don't send error messages to channel
+                        if "Sorry, I couldn't generate a response" in response:
+                            # Send error notification to owner via DM
+                            try:
+                                owner = await bot.fetch_user(bot.owner_id)
+                                await owner.send(f"⚠️ API Error in {message.guild.name} #{message.channel.name}: Failed to generate response. Check your API key.")
+                            except:
+                                pass
+                            print(f"❌ Failed to generate response in {message.channel.name}")
+                            return
+                        
                         # Split long responses
                         chunks = split_response(response)
                         for chunk in chunks:
