@@ -1,4 +1,3 @@
-
 import os
 import asyncio
 import discord
@@ -97,10 +96,10 @@ class MultiBotManager:
     def __init__(self):
         self.bots = []
         self.active_talks = {}  # channel_id: set of bot_ids talking
-        
+
     def add_bot(self, bot):
         self.bots.append(bot)
-        
+
     def get_available_bot(self, channel_id, exclude_user_id=None):
         # Get a bot that's not currently talking to this user
         available = []
@@ -108,7 +107,7 @@ class MultiBotManager:
             if bot.user and bot.user.id not in bot_conversations.get(exclude_user_id, set()):
                 available.append(bot)
         return random.choice(available) if available else random.choice(self.bots)
-    
+
     async def join_server(self, invite_link):
         results = []
         for bot in self.bots:
@@ -119,7 +118,7 @@ class MultiBotManager:
             except Exception as e:
                 results.append(f"❌ {bot.user.name} failed: {str(e)}")
         return results
-    
+
     async def leave_server(self, guild_id):
         results = []
         for bot in self.bots:
@@ -161,7 +160,7 @@ def create_bot(token, bot_index):
     bot.active_conversations = {}
     bot.bot_index = bot_index
     bot.selfbot_id = None
-    
+
     # Unique personality variations for each bot
     personality_variants = [
         "You tend to be more enthusiastic and use more exclamations!",
@@ -175,7 +174,7 @@ def create_bot(token, bot_index):
         "You're calm and measured in your responses.",
         "You're friendly but slightly sarcastic in a playful way."
     ]
-    
+
     if bot_index < len(personality_variants):
         bot.personality_variant = personality_variants[bot_index]
     else:
@@ -226,7 +225,7 @@ def create_bot(token, bot_index):
             clear_console()
             print_header()
             print(f"Multi-Bot AI Selfbot successfully started with {len(TOKENS)} bots.\n")
-            
+
             if update_available:
                 print(f"{Fore.RED}A new version of the AI Selfbot is available! Please update to {latest_version} at: \nhttps://github.com/Najmul190/Discord-AI-Selfbot/releases/latest{Style.RESET_ALL}\n")
 
@@ -266,7 +265,7 @@ def create_bot(token, bot_index):
             if ctx.author.id == bot.owner_id:
                 if guild_id is None:
                     guild_id = ctx.guild.id
-                
+
                 await ctx.send("🔄 Attempting to leave server with all bots...")
                 results = await multi_bot_manager.leave_server(guild_id)
                 response = "\n".join(results)
@@ -277,13 +276,13 @@ def create_bot(token, bot_index):
             if ctx.author.id == bot.owner_id:
                 if channel_id is None:
                     channel_id = ctx.channel.id
-                
+
                 # Activate all bots in this channel
                 for current_bot in multi_bot_manager.bots:
                     current_bot.active_channels.add(channel_id)
-                
+
                 multi_bot_manager.active_talks[channel_id] = set(bot.user.id for bot in multi_bot_manager.bots if bot.user)
-                
+
                 await ctx.send(f"🤖 All bots are now active in <#{channel_id}> and will engage in natural conversations!")
 
     def should_ignore_message(message):
@@ -324,11 +323,11 @@ def create_bot(token, bot_index):
         # Multi-bot logic: only respond if this bot should handle this message
         should_respond = False
         if (content_has_trigger or mentioned or replied_to or is_dm or is_group_dm or in_conversation or is_active_channel):
-            
+
             # Check if another bot recently responded to this user
             user_conv_key = f"{message.author.id}"
             last_bot = bot_conversations.get(user_conv_key)
-            
+
             if last_bot != bot.selfbot_id or random.random() < 0.3:  # 30% chance to switch bots
                 # Probability-based selection to avoid same bot always responding
                 available_bots = [b for b in multi_bot_manager.bots if b.user and b.user.id != last_bot]
@@ -362,7 +361,7 @@ def create_bot(token, bot_index):
     async def generate_response_and_reply(message, prompt, history, image_url=None):
         # Add personality variant to instructions
         enhanced_instructions = bot.instructions + f"\n\nPersonality note: {bot.personality_variant}"
-        
+
         if not bot.realistic_typing:
             async with message.channel.typing():
                 if image_url:
@@ -381,21 +380,30 @@ def create_bot(token, bot_index):
 
         chunks = split_response(response)
 
-        if len(chunks) > 3:
-            chunks = chunks[:3]
-            print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} response too long, truncating.")
-
         for chunk in chunks:
-            if DISABLE_MENTIONS:
-                chunk = chunk.replace("@", "@\u200b")
+                # Add server emojis randomly to responses
+                if hasattr(message.channel, 'guild') and message.channel.guild.emojis:
+                    server_emojis = [str(emoji) for emoji in message.channel.guild.emojis]
+                    if server_emojis and random.random() < 0.3:  # 30% chance to add server emoji
+                        emoji_to_add = random.choice(server_emojis)
+                        chunk += f" {emoji_to_add}"
 
-            if bot.anti_age_ban:
-                chunk = re.sub(
-                    r"(?<!\d)([0-9]|1[0-2])(?!\d)|\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b",
-                    "\u200b",
-                    chunk,
-                    flags=re.IGNORECASE,
-                )
+                # Add standard emojis more frequently
+                if random.random() < 0.6:  # 60% chance to add emoji
+                    indian_emojis = ["😊", "😄", "🤔", "👍", "❤️", "🔥", "💯", "😎", "🙏", "✨", "👋", "😁", "🎉", "💪"]
+                    chunk += f" {random.choice(indian_emojis)}"
+
+                if DISABLE_MENTIONS:
+                    # Don't disable mentions completely, but make them safer
+                    chunk = chunk.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
+
+                if bot.anti_age_ban:
+                    chunk = re.sub(
+                        r"(?<!\d)([0-9]|1[0-2])(?!\d)|\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b",
+                        "\u200b",
+                        chunk,
+                        flags=re.IGNORECASE,
+                    )
 
             print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} ({bot.user.name}): {message.author.name}: {prompt}')
             print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} responding: {chunk}')
@@ -592,7 +600,7 @@ async def run_all_bots():
         all_bots.append(bot)
         task = asyncio.create_task(bot.start(token, reconnect=True))
         tasks.append(task)
-    
+
     await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
