@@ -46,6 +46,9 @@ bot:
   # Whether the bot should ping on replies
   reply_ping: true
 
+  # Whether the bot should respond to all messages in active channels (without trigger word)
+  respond_without_trigger: true
+
 notifications:
   error_webhook: "" 
 

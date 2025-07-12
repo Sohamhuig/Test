@@ -66,6 +66,21 @@ class Management(commands.Cog):
                 f"Group chats are now {'allowed' if self.bot.allow_gc else 'disallowed'} for active channels."
             )
 
+    @commands.command(name="toggletrigger", description="Toggle responding without trigger word in active channels.")
+    async def toggletrigger(self, ctx):
+        if ctx.author.id == self.bot.owner_id:
+            self.bot.respond_without_trigger = not self.bot.respond_without_trigger
+
+            config = load_config()
+
+            config["bot"]["respond_without_trigger"] = self.bot.respond_without_trigger
+
+            self.save_config(config)
+
+            await ctx.send(
+                f"Responding without trigger is now {'enabled' if self.bot.respond_without_trigger else 'disabled'} in active channels."
+            )
+
     @commands.command()
     async def ignore(self, ctx, user: discord.User):
         try:

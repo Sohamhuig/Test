@@ -33,6 +33,7 @@ Bot Commands:
 {prefix}toggleactive [id / channel] - Toggle a mentioned channel or the current channel to the list of active channels
 {prefix}toggledm - Toggle if the bot should be active in DM's or not
 {prefix}togglegc - Toggle if the bot should be active in group chats or not
+{prefix}toggletrigger - Toggle responding without trigger word in active channels
 {prefix}ignore [user] - Stop a user from using the bot
 {prefix}reload - Reloads all cogs and the instructions
 {prefix}prompt [prompt / clear] - View, set or clear the prompt for the AI

@@ -95,6 +95,7 @@ bot.batch_wait_time = float(config["bot"]["batch_wait_time"])
 bot.hold_conversation = config["bot"]["hold_conversation"]
 bot.user_message_counts = {}
 bot.user_cooldowns = {}
+bot.respond_without_trigger = config["bot"]["respond_without_trigger"]
 
 bot.instructions = load_instructions()
 
@@ -222,6 +223,9 @@ def is_trigger_message(message):
         for keyword in TRIGGER
     )
 
+    # Check if message is in an active channel (responds without trigger)
+    is_active_channel = message.channel.id in bot.active_channels and bot.respond_without_trigger
+
     if (
         content_has_trigger
         or mentioned
@@ -229,6 +233,7 @@ def is_trigger_message(message):
         or is_dm
         or is_group_dm
         or in_conversation
+        or is_active_channel
     ):
         bot.active_conversations[conv_key] = time.time()
 
@@ -239,6 +244,7 @@ def is_trigger_message(message):
         or is_dm
         or is_group_dm
         or in_conversation
+        or is_active_channel
     )
 
 
