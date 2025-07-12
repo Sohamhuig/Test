@@ -157,4 +157,3 @@ def add_random_emojis(text, emojis):
         num_words += 1  # Increment the number of words
 
     return " ".join(words)
-`
