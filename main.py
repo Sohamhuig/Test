@@ -145,7 +145,7 @@ async def on_ready():
         print(f"{Fore.RED}Error: Please set a valid owner_id in config.yaml{Style.RESET_ALL}")
         await bot.close()
         sys.exit(1) # exit the program
-    
+
     if config["bot"]["owner_id"] == bot.user.id:
         print(f"{Fore.RED}Error: owner_id in config.yaml cannot be the same as the bot account's user ID{Style.RESET_ALL}")
         await bot.close()
@@ -248,11 +248,16 @@ def is_trigger_message(message):
     )
 
 
-def update_message_history(author_id, message_content):
-    if author_id not in bot.message_history:
-        bot.message_history[author_id] = []
-    bot.message_history[author_id].append(message_content)
-    bot.message_history[author_id] = bot.message_history[author_id][-MAX_HISTORY:]
+def update_message_history(bot, author_id, message_content, is_bot_response=False):
+    key = f"{author_id}"
+    if key not in bot.message_history:
+        bot.message_history[key] = []
+
+    role = "assistant" if is_bot_response else "user"
+    bot.message_history[key].append({"role": role, "content": message_content})
+
+    # Keep only the MAX_HISTORY latest messages
+    bot.message_history[key] = bot.message_history[key][-MAX_HISTORY:]
 
 
 async def generate_response_and_reply(message, prompt, history, image_url=None):
@@ -354,6 +359,9 @@ async def generate_response_and_reply(message, prompt, history, image_url=None):
                                         bot.processing_locks[channel_id] = Lock()
 
                                     bot.message_queues[channel_id].append(follow_up)
+
+                                    # Update conversation history
+                                    #update_message_history(bot, message.author.id, response, is_bot_response=True)
 
                                 except asyncio.TimeoutError:
                                     break
@@ -532,10 +540,13 @@ async def process_message_queue(channel_id):
             if key not in bot.message_history:
                 bot.message_history[key] = []
 
-            bot.message_history[key].append(
-                {"role": "user", "content": combined_content}
-            )
-            history = bot.message_history[key]
+            # Removed the key based history and changed it to author id
+            #bot.message_history[key].append(
+            #    {"role": "user", "content": combined_content}
+            #)
+            #history = bot.message_history[key]
+
+            history = bot.message_history.get(f"{message_to_reply_to.author.id}", [])
 
             if message_to_reply_to.channel.id in bot.active_channels or (
                 isinstance(message_to_reply_to.channel, discord.DMChannel)
@@ -544,9 +555,11 @@ async def process_message_queue(channel_id):
                 response = await generate_response_and_reply(
                     message_to_reply_to, combined_content, history, image_url
                 )
-                bot.message_history[key].append(
-                    {"role": "assistant", "content": response}
-                )
+                #bot.message_history[key].append(
+                #    {"role": "assistant", "content": response}
+                #)
+                update_message_history(bot, message_to_reply_to.author.id, combined_content, is_bot_response=False)
+                update_message_history(bot, message_to_reply_to.author.id, response, is_bot_response=True)
 
 
 async def load_extensions():
@@ -572,4 +585,5 @@ async def load_extensions():
 
 
 if __name__ == "__main__":
+    # Multiple tokens support will need refactoring of the bot.run call
     bot.run(TOKEN, log_handler=None)
