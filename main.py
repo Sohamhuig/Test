@@ -79,8 +79,10 @@ for i in range(2, 11):  # Support up to 10 tokens
         TOKENS.append(token)
 
 if not TOKENS:
-    print("No Discord tokens found!")
+    print(f"{Fore.RED}No Discord tokens found! Please check your .env file.{Style.RESET_ALL}")
     sys.exit(1)
+
+print(f"{Fore.GREEN}Found {len(TOKENS)} token(s){Style.RESET_ALL}")
 
 PREFIX = config["bot"]["prefix"]
 OWNER_ID = config["bot"]["owner_id"]
