@@ -115,13 +115,14 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
 - Bot User: {self.bot.user}
 - Owner ID: {self.bot.owner_id}
 - Your ID: {ctx.author.id}
-- Command Prefix: {self.bot.command_prefix}
+- Command Prefix: '{self.bot.command_prefix}'
 - Current Channel ID: {ctx.channel.id}
 - Paused: {self.bot.paused}
 - Active Channels: {len(self.bot.active_channels)}
 - Allow DM: {self.bot.allow_dm}
 - Allow GC: {self.bot.allow_gc}
 - Channel in Active: {ctx.channel.id in self.bot.active_channels}
+- Talk Channels: {len(getattr(self.bot, 'talk_channels', set()))}
 ```"""
         await ctx.send(debug_info, delete_after=60)
 
