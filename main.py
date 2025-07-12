@@ -410,34 +410,34 @@ def create_bot(token, bot_index):
                 print_separator()
 
         try:
-                if bot.realistic_typing:
-                    await asyncio.sleep(random.randint(10, 30))
-                    async with message.channel.typing():
-                        characters_per_second = random.uniform(5.0, 6.0)
-                        await asyncio.sleep(int(len(chunk) / characters_per_second))
+            if bot.realistic_typing:
+                await asyncio.sleep(random.randint(10, 30))
+                async with message.channel.typing():
+                    characters_per_second = random.uniform(5.0, 6.0)
+                    await asyncio.sleep(int(len(chunk) / characters_per_second))
 
-                try:
-                    if isinstance(message.channel, discord.DMChannel):
-                        sent_message = await message.channel.send(chunk)
-                    else:
-                        sent_message = await message.reply(
-                            chunk,
-                            mention_author=(True if config["bot"]["reply_ping"] else False),
-                        )
+            try:
+                if isinstance(message.channel, discord.DMChannel):
+                    sent_message = await message.channel.send(chunk)
+                else:
+                    sent_message = await message.reply(
+                        chunk,
+                        mention_author=(True if config["bot"]["reply_ping"] else False),
+                    )
 
-                    conv_key = f"{message.author.id}-{message.channel.id}"
-                    bot.active_conversations[conv_key] = time.time()
+                conv_key = f"{message.author.id}-{message.channel.id}"
+                bot.active_conversations[conv_key] = time.time()
 
-                except discord.errors.HTTPException as e:
-                    print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} error replying to message")
-                    await webhook_log(message, e)
-                except discord.errors.Forbidden:
-                    print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} missing permissions")
-                except Exception as e:
-                    print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} error: {e}")
-
+            except discord.errors.HTTPException as e:
+                print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} error replying to message")
+                await webhook_log(message, e)
             except discord.errors.Forbidden:
-                print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} missing permissions to send message")
+                print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} missing permissions")
+            except Exception as e:
+                print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} error: {e}")
+
+        except discord.errors.Forbidden:
+            print(f"{datetime.now().strftime('[%H:%M:%S]')} Bot {bot_index + 1} missing permissions to send message")
 
         return response
 
