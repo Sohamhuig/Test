@@ -129,10 +129,16 @@ def create_config():
             password=True,
         )
 
-    token = get_input(
-        "Enter Discord token (input will be hidden)", validate_token, password=True
-    )
-    api_keys["DISCORD_TOKEN"] = token
+    # Get multiple tokens
+    num_tokens = int(get_input("How many Discord tokens do you want to add? (1-10)", lambda x: x.isdigit() and 1 <= int(x) <= 10))
+    
+    for i in range(num_tokens):
+        if i == 0:
+            token = get_input(f"Enter Discord token {i+1} (input will be hidden)", validate_token, password=True)
+            api_keys["DISCORD_TOKEN"] = token
+        else:
+            token = get_input(f"Enter Discord token {i+1} (input will be hidden)", validate_token, password=True)
+            api_keys[f"DISCORD_TOKEN_{i+1}"] = token
 
     config_dir = resource_path("config")
     os.makedirs(config_dir, exist_ok=True)
