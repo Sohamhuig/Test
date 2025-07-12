@@ -405,9 +405,9 @@ def create_bot(token, bot_index):
                         flags=re.IGNORECASE,
                     )
 
-            print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} ({bot.user.name}): {message.author.name}: {prompt}')
-            print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} responding: {chunk}')
-            print_separator()
+                print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} ({bot.user.name}): {message.author.name}: {prompt}')
+                print(f'{datetime.now().strftime("[%H:%M:%S]")} Bot {bot_index + 1} responding: {chunk}')
+                print_separator()
 
             try:
                 if bot.realistic_typing:
