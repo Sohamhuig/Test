@@ -45,6 +45,27 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
 """
         await ctx.send(help_text, delete_after=30)
 
+    @commands.command(name="talk", description="Send a message to a specific user")
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def talk(self, ctx, user_id: int, *, message):
+        if ctx.author.id != self.bot.owner_id:
+            await ctx.send("Only the bot owner can use this command.", delete_after=10)
+            return
+        
+        try:
+            user = await self.bot.fetch_user(user_id)
+            if user:
+                await user.send(message)
+                await ctx.send(f"Message sent to {user.name}#{user.discriminator}", delete_after=10)
+            else:
+                await ctx.send("User not found.", delete_after=10)
+        except discord.Forbidden:
+            await ctx.send("Cannot send DM to this user (blocked or DMs disabled).", delete_after=10)
+        except discord.NotFound:
+            await ctx.send("User not found.", delete_after=10)
+        except Exception as e:
+            await ctx.send(f"Error: {str(e)}", delete_after=10)
+
     @commands.command(
         aliases=["analyze"],
         description="Analyze a user's message history and provides a psychological profile.",
