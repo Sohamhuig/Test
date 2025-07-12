@@ -220,21 +220,30 @@ def create_bot(token, bot_index):
 
         # Check if this is a talk channel
         if hasattr(bot, 'talk_channels') and message.channel.id in bot.talk_channels:
-            # Only respond to some messages, not all (like a real human)
+            # More responsive but still human-like behavior
             should_respond = False
 
             # Always respond if mentioned
             if bot.user.mentioned_in(message):
                 should_respond = True
-            # Sometimes respond to questions
-            elif any(word in message.content.lower() for word in ['?', 'kya', 'what', 'how', 'why', 'when', 'where']):
-                should_respond = random.random() < 0.4  # 40% chance
-            # Sometimes respond to greetings
-            elif any(word in message.content.lower() for word in ['hi', 'hello', 'hey', 'sup', 'wassup', 'namaste', 'good morning', 'good night']):
-                should_respond = random.random() < 0.6  # 60% chance
+            # Respond to questions more often
+            elif any(word in message.content.lower() for word in ['?', 'kya', 'what', 'how', 'why', 'when', 'where', 'kaise', 'kahan', 'kab', 'kyun']):
+                should_respond = random.random() < 0.8  # 80% chance for questions
+            # Respond to greetings often
+            elif any(word in message.content.lower() for word in ['hi', 'hello', 'hey', 'sup', 'wassup', 'namaste', 'good morning', 'good night', 'bye', 'tc']):
+                should_respond = random.random() < 0.85  # 85% chance for greetings
+            # Respond to emotional expressions
+            elif any(word in message.content.lower() for word in ['lol', 'haha', 'sad', 'happy', 'excited', 'angry', 'omg', 'wtf', 'damn', 'wow']):
+                should_respond = random.random() < 0.6  # 60% chance for emotional messages
+            # Respond to longer messages more often (more engaging content)
+            elif len(message.content) > 30:
+                should_respond = random.random() < 0.4  # 40% chance for longer messages
             # Sometimes just randomly respond to keep conversation going
-            elif len(message.content) > 10:  # Don't respond to very short messages
-                should_respond = random.random() < 0.15  # 15% chance for normal messages
+            elif len(message.content) > 10:
+                should_respond = random.random() < 0.25  # 25% chance for normal messages
+            # Very short messages get less attention
+            else:
+                should_respond = random.random() < 0.1  # 10% chance for very short messages
 
             if not should_respond:
                 return
