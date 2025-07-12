@@ -3,7 +3,7 @@ bot:
   owner_id: 996069903599669389
   
   # Prefix you want bot commands to be triggered with
-  prefix: "~"
+  prefix: "-"
   
   # The word(s) you want the AI to respond to (e.g: trigger="John" or trigger="John,Jon,Jonathon")
   trigger: "bot"
