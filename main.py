@@ -195,11 +195,19 @@ def create_bot(token, bot_index):
 
     @bot.event
     async def on_ready():
-        print(f"{Fore.GREEN}Bot {bot.bot_index + 1} logged in as {bot.user}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Bot {bot.bot_index + 1} logged in as {bot.user} (ID: {bot.user.id}){Style.RESET_ALL}")
         
         # Set bot status to online
-        await bot.change_presence(status=discord.Status.online)
-        print(f"{Fore.GREEN}Bot {bot.bot_index + 1} status set to online{Style.RESET_ALL}")
+        try:
+            await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.watching, name="for messages"))
+            print(f"{Fore.GREEN}Bot {bot.bot_index + 1} status set to online{Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}Failed to set status: {e}{Style.RESET_ALL}")
+
+        # Show bot info
+        print(f"{Fore.CYAN}Bot {bot.bot_index + 1} is in {len(bot.guilds)} servers{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Active channels: {len(bot.active_channels)}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Owner ID: {bot.owner_id}{Style.RESET_ALL}")
 
         # Collect custom emojis from all servers
         from utils.ai import collect_server_emojis
@@ -395,13 +403,22 @@ async def main():
     tasks = []
     for i, bot in enumerate(multi_bot_manager.bots):
         token = TOKENS[i]
+        print(f"{Fore.CYAN}Starting bot {i+1} with token: {token[:20]}...{Style.RESET_ALL}")
         task = asyncio.create_task(bot.start(token))
         tasks.append(task)
 
     try:
         await asyncio.gather(*tasks)
+    except discord.LoginFailure:
+        print(f"{Fore.RED}Invalid Discord token! Please check your .env file.{Style.RESET_ALL}")
+    except discord.HTTPException as e:
+        print(f"{Fore.RED}HTTP error during login: {e}{Style.RESET_ALL}")
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}Shutting down bots...{Style.RESET_ALL}")
+        for bot in multi_bot_manager.bots:
+            await bot.close()
+    except Exception as e:
+        print(f"{Fore.RED}Unexpected error: {e}{Style.RESET_ALL}")
         for bot in multi_bot_manager.bots:
             await bot.close()
 
