@@ -196,6 +196,10 @@ def create_bot(token, bot_index):
     @bot.event
     async def on_ready():
         print(f"{Fore.GREEN}Bot {bot.bot_index + 1} logged in as {bot.user}{Style.RESET_ALL}")
+        
+        # Set bot status to online
+        await bot.change_presence(status=discord.Status.online)
+        print(f"{Fore.GREEN}Bot {bot.bot_index + 1} status set to online{Style.RESET_ALL}")
 
         # Collect custom emojis from all servers
         from utils.ai import collect_server_emojis

@@ -126,6 +126,30 @@ https://github.com/Najmul190/Discord-AI-Selfbot```
 ```"""
         await ctx.send(debug_info, delete_after=60)
 
+    @commands.command(name="status", description="Change bot status")
+    async def status(self, ctx, status_type: str = None):
+        if ctx.author.id != self.bot.owner_id:
+            await ctx.send("Only the bot owner can use this command.", delete_after=10)
+            return
+        
+        if status_type is None:
+            await ctx.send("Usage: `-status <online/idle/dnd/invisible>`", delete_after=15)
+            return
+        
+        status_map = {
+            "online": discord.Status.online,
+            "idle": discord.Status.idle,
+            "dnd": discord.Status.dnd,
+            "invisible": discord.Status.invisible
+        }
+        
+        if status_type.lower() not in status_map:
+            await ctx.send("Invalid status. Use: online, idle, dnd, or invisible", delete_after=15)
+            return
+        
+        await self.bot.change_presence(status=status_map[status_type.lower()])
+        await ctx.send(f"Status changed to {status_type.lower()}", delete_after=10)
+
     @commands.command(name="console", description="Enable console messaging mode")
     async def console(self, ctx):
         if ctx.author.id != self.bot.owner_id:
